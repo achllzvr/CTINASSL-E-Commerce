@@ -24,8 +24,7 @@ class Database {
             $con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $con;
         } catch (PDOException $e) {
-            // Never echo the actual error in production as it might reveal sensitive info
-            die("Connection failed. Please check configuration.");
+            die("Connection failed: " . $e->getMessage());
         }
     }
 
