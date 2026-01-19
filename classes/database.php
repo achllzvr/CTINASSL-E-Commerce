@@ -2,13 +2,31 @@
 // Dependencies
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Dotenv\Dotenv;
 require_once __DIR__ . '/../vendor/autoload.php';
+
+// LOAD ENVIRONMENT VARIABLES
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->safeLoad();
 
 class Database {
 
     // Database Connection
     function opencon() {
-        return new PDO('mysql:host=localhost;dbname=karbono_db', 'root', '');
+        // Use $_ENV to get values
+        $host = $_ENV['DB_HOST'];
+        $dbname = $_ENV['DB_NAME'];
+        $username = $_ENV['DB_USER'];
+        $password = $_ENV['DB_PASS'];
+
+        try {
+            $con = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+            $con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $con;
+        } catch (PDOException $e) {
+            // Never echo the actual error in production as it might reveal sensitive info
+            die("Connection failed. Please check configuration.");
+        }
     }
 
     // Audit Logging
@@ -24,14 +42,14 @@ class Database {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com'; 
+            $mail->Host       = $_ENV['SMTP_HOST']; 
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'your-email@gmail.com'; 
-            $mail->Password   = 'your-app-password';    
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port       = 587;
+            $mail->Username   = $_ENV['SMTP_USER']; 
+            $mail->Password   = $_ENV['SMTP_PASS'];    
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Usually SMTPS for Port 465
+            $mail->Port       = $_ENV['SMTP_PORT'];
 
-            $mail->setFrom('no-reply@karbono.com', 'Karbono Security');
+            $mail->setFrom($_ENV['SMTP_USER'], 'Karbono Security');
             $mail->addAddress($to);
             $mail->isHTML(true);
             $mail->Subject = $subject;
